@@ -179,4 +179,4 @@ if __name__ == "__main__":
     objs.append(obj)
     obj, ok = compiler.compile_obj(root, b, out, [], False, norun=True)
     objs.append(obj)
-    compiler.compile_exe(root, objs, exe, [], False, norun=True)
+    compiler.compile_exe(root, objs, exe, [], [], False, norun=True)

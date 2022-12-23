@@ -28,7 +28,7 @@ def main() -> None:
   exe: str
   cc: str
   libs: list[str]
-  link: listr[str]
+  link: list[str]
   incl: list[Path]
   clean = "clean" in sys.argv
   debug = "debug" in sys.argv

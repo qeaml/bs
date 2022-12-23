@@ -1,6 +1,5 @@
 from qcbs.common import *
 from pathlib import Path
-import shutil
 import qcbs.c as c
 
 SOURCE_FILE_EXTS = ["c", "cpp"]
@@ -76,13 +75,6 @@ class Job:
     self.debug = debug
     self.norun = norun
 
-    if clean:
-      try:
-        shutil.rmtree(obj)
-        shutil.rmtree(bin)
-      except:
-        pass
-
     self.bin.mkdir(parents=True, exist_ok=True)
     self.obj.mkdir(parents=True, exist_ok=True)
 
@@ -114,15 +106,15 @@ class Job:
   def act(self) -> bool:
     self.discover_sources()
 
-    if self.clean:
+    if not self.bin.exists():
+      self.bin.mkdir(parents=True)
+
+    if not self.obj.exists():
+      self.obj.mkdir(parents=True)
+    elif self.clean:
       important("Clean Build!")
-      try:
-        shutil.rmtree(self.bin)
-      except Exception as e:
-        err(f"Could not clean: {e.__class__.__name__}: {e}")
-        return False
-    self.bin.mkdir(parents=True, exist_ok=True)
-    self.obj.mkdir(parents=True, exist_ok=True)
+      for f in self.obj.rglob("*."+self.cc.flagset.obj_ext):
+        f.unlink()
 
     ok = self.compile_all_objects()
     if not ok:
@@ -138,6 +130,7 @@ if __name__ == "__main__":
   exe = "my-app"
   cc = "cl"
   libs = ["SDL2", "SDL2main"]
+  link: list[str] = []
   incl: list[Path] = []
   job = Job(
     root,
@@ -147,6 +140,7 @@ if __name__ == "__main__":
     exe,
     cc,
     libs,
+    link,
     incl,
     True,
     False,
