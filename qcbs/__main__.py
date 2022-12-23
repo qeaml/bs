@@ -28,6 +28,7 @@ def main() -> None:
   exe: str
   cc: str
   libs: list[str]
+  link: listr[str]
   incl: list[Path]
   clean = "clean" in sys.argv
   debug = "debug" in sys.argv
@@ -76,6 +77,11 @@ def main() -> None:
     else:
       libs = build_info["libs"]
 
+    if "link" not in build_info:
+      link = []
+    else:
+      link = build_info["link"]
+
     if "incl" not in build_info:
       incl = []
     else:
@@ -88,7 +94,7 @@ def main() -> None:
     err(f"Provided src directory does not exist: {src.absolute()}")
     return
 
-  thejob = job.Job(root, src, bin, obj, exe, cc, libs, incl, clean, debug, False)
+  thejob = job.Job(root, src, bin, obj, exe, cc, libs, link, incl, clean, debug, False)
   if thejob.act():
     span = time()-start
     important(f"Successfully built in {span:.1f}s")

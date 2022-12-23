@@ -37,6 +37,10 @@ class Job:
   # e.g. ["SDL2", "SDL2_main"]
   libs: list[str]
 
+  # flags to be passed to the linker
+  # e.g. "/subsystem:console" for cl
+  link: list[str]
+
   # directories to include during compilation, relative to src
   # e.g. ["imgui"]
   incl: list[Path]
@@ -58,7 +62,7 @@ class Job:
   #   b) newly compiled by this build
   objects: list[Path]
 
-  def __init__(self, root: Path, src: Path, bin: Path, obj: Path, exe: str, cc: str, libs: list[str], incl: list[Path], clean: bool, debug: bool, norun: bool):
+  def __init__(self, root: Path, src: Path, bin: Path, obj: Path, exe: str, cc: str, libs: list[str], link: list[str], incl: list[Path], clean: bool, debug: bool, norun: bool):
     self.root = root
     self.src = src
     self.bin = bin
@@ -66,6 +70,7 @@ class Job:
     self.exe = exe
     self.cc = c.COMPILERS[cc]
     self.libs = libs
+    self.link = link
     self.incl = incl
     self.clean = clean
     self.debug = debug
@@ -78,8 +83,8 @@ class Job:
       except:
         pass
 
-    self.bin.mkdir(exist_ok=True)
-    self.obj.mkdir(exist_ok=True)
+    self.bin.mkdir(parents=True, exist_ok=True)
+    self.obj.mkdir(parents=True, exist_ok=True)
 
     self.sources = []
     self.objects = []
@@ -101,7 +106,7 @@ class Job:
 
   def compile_exe(self) -> bool:
     exe = self.bin.joinpath(exe_name(self.exe))
-    ok = self.cc.compile_exe(self.root, self.objects, exe, self.libs, self.debug, norun=self.norun)
+    ok = self.cc.compile_exe(self.root, self.objects, exe, self.libs, self.link, self.debug, norun=self.norun)
     if not ok:
       err("Compilation failed. Aborting.")
     return ok
@@ -116,8 +121,8 @@ class Job:
       except Exception as e:
         err(f"Could not clean: {e.__class__.__name__}: {e}")
         return False
-    self.bin.mkdir(exist_ok=True)
-    self.obj.mkdir(exist_ok=True)
+    self.bin.mkdir(parents=True, exist_ok=True)
+    self.obj.mkdir(parents=True, exist_ok=True)
 
     ok = self.compile_all_objects()
     if not ok:

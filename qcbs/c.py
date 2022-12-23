@@ -31,6 +31,11 @@ class Flagset:
   #      "-l%s" for gcc
   lib: str
 
+  # pass a flag to the linker, due to the MSVC commandline syntax, the argument
+  # this is only really required for compilers with GNU-like commandline syntax
+  # e.g. "-Xlinker %s" for gcc
+  link: str
+
   # contains flags specific for C and C++ respecively
   # e.g. "-std=c11" for C via gcc,
   #      "/std:c++17" for C++ via cl.exe
@@ -75,7 +80,7 @@ class Flagset:
   # linking aginst the given libraries; the flags returned by the function are
   # ordered in accordance with the cl.exe commandline syntax. gcc-like
   # commandline syntax is position-independent, unlike cl.exe
-  def for_exe(self, cmd: str, objs: list[Path], out: Path, lib: list[str], debug: bool) -> str:
+  def for_exe(self, cmd: str, objs: list[Path], out: Path, lib: list[str], link: list[str], debug: bool) -> str:
     return " ".join((
       cmd,
       self.gen,
@@ -83,6 +88,7 @@ class Flagset:
       self.exe % str(out),
       " ".join(str(o) for o in objs),
       " ".join(self.lib % l for l in lib),
+      " ".join(self.link % f"{o}" for o in link),
     ))
 
 # flags for compilers with a gcc-like syntax (so gcc and clang)
@@ -97,6 +103,7 @@ GNULIKE_FLAGSET = Flagset(
   cpp = "-xc++ -std=c++17",
   opt = "-DNDEBUG -O3 -flto",
   dbg = "-DDEBUG -O0 -Wall -Wpedantic -Wextra",
+  link = "-Xlinker %s",
 )
 
 # flags for cl.exe
@@ -111,6 +118,7 @@ CL_FLAGSET = Flagset(
   cpp = "/Tp /std:c++17",
   opt = "/DNDEBUG /Ot",
   dbg = "/DDEBUG /Od /Wall",
+  link = "%s",
 )
 
 @dataclass
@@ -143,9 +151,9 @@ class Compiler:
   # alike compile_obj, compiling multiple object files to a single executable
   # instead. unlike compile_obj, does NOT return the filename of the compiled
   # executable, only the bool signifying success
-  def compile_exe(self, root: Path, objs: list[Path], out: Path, lib: list[str], debug: bool, norun: bool = False) -> bool:
+  def compile_exe(self, root: Path, objs: list[Path], out: Path, lib: list[str], link: list[str], debug: bool, norun: bool = False) -> bool:
     important(f"* {out.stem}{out.suffix}")
-    cmd = self.flagset.for_exe(self.cmd, objs, out, lib, debug)
+    cmd = self.flagset.for_exe(self.cmd, objs, out, lib, link, debug)
     if norun:
       print(cmd)
       return True
