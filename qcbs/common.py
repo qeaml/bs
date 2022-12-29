@@ -8,7 +8,10 @@ def exe_name(fn: str) -> str:
   return base
 
 def err(msg: str) -> None:
-  print(colorama.Fore.RED + msg + colorama.Style.RESET_ALL)
+  print(colorama.Fore.RED + "Error: " + msg + colorama.Style.RESET_ALL)
+
+def warn(msg: str) -> None:
+  print(colorama.Fore.YELLOW + "Warning: "+ msg + colorama.Style.RESET_ALL)
 
 def important(msg: str) -> None:
   print(colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL)

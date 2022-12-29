@@ -13,7 +13,7 @@ with qcbs in the [`example` directory](example).
 exe: '' # * base name of the executable, WITHOUT any extension
 
 cc: '' # * name of the compiler to use.
-      # currently can be one of: 'cl' (MSVC), 'clang', 'gcc'
+       # currently can be one of: 'cl' (MSVC), 'clang', 'gcc'
 
 root: '' # the root of the project. this is relative to wherever this file is.
          # all other paths in this file are relative to this path. if this is
@@ -54,25 +54,21 @@ If you wish to build the project in the current working directory with debug
 flags:
 
 ```console
-$ qcbs . debug
+$ qcbs --debug
 ```
-
-Note that the `.` is **required** for the flag afterwards to be acknowledged.
-If the `.` is not present, `debug` is assumed to be the directory of the
-build file.
 
 If you wish to clean the build directory before building (effectively
 completely rebuilding the entire project):
 
 ```console
-$ qcbs . clean
+$ qcbs --clean
 ```
 
 `clean` and `debug can be combined, in any order:
 
 ```console
-$ qcbs . clean debug
-$ qcbs /user/Timmy/projects/my-app debug
-$ qcbs .. debug clean
-$ qcbs cooltool clean
+$ qcbs --clean --debug
+$ qcbs /user/Timmy/projects/my-app --debug
+$ qcbs .. --debug --clean
+$ qcbs cooltool --clean
 ```
