@@ -48,12 +48,6 @@ class Flagset:
   opt: str
   dbg: str
 
-  # returns the object filename for the provided source filename
-  # e.g. "state.c" -> "state.obj" for cl.exe
-  def obj_fn(self, src: str) -> str:
-    base, *_ = src.split(".")
-    return base+"."+self.obj_ext
-
   # determines the flags used for the given language based off it's extension
   def lang_flags(self, lang: str) -> str:
     match lang:
@@ -135,8 +129,9 @@ class Compiler:
   # compiles the given source file into an objec file, returning a tuple
   # containing the resulting object filename and a bool indicating whether the
   # compilation was successful or not
-  def compile_obj(self, root: Path, src: Path, out_dir: Path, inc: list[Path], debug: bool, norun: bool) -> tuple[Path, bool]:
-    obj = out_dir.joinpath(self.flagset.obj_fn(src.stem))
+  def compile_obj(self, root: Path, src_dir: Path, src: Path, out_dir: Path, inc: list[Path], debug: bool, norun: bool) -> tuple[Path, bool]:
+    obj = out_dir.joinpath(src.relative_to(src_dir)).with_suffix(f".{self.flagset.obj_ext}")
+    obj.parent.mkdir(exist_ok=True)
     if obj.exists() and src.stat().st_mtime < obj.stat().st_mtime:
       return obj, True
     important(f"* {obj.stem}{obj.suffix}")
@@ -168,15 +163,16 @@ COMPILERS = {
 
 if __name__ == "__main__":
   root = Path(".")
-  a = root.joinpath("main.cpp")
-  b = root.joinpath("log.c")
+  src = root.joinpath("src")
+  a = src.joinpath("main.cpp")
+  b = src.joinpath("log.c")
   out = root.joinpath("out")
   exe = out.joinpath(exe_name("main"))
   for cname, compiler in COMPILERS.items():
     print(f"  Sample command output for {cname}:")
     objs = []
-    obj, ok = compiler.compile_obj(root, a, out, [], False, norun=True)
+    obj, ok = compiler.compile_obj(root, src, a, out, [], False, norun=True)
     objs.append(obj)
-    obj, ok = compiler.compile_obj(root, b, out, [], False, norun=True)
+    obj, ok = compiler.compile_obj(root, src, b, out, [], False, norun=True)
     objs.append(obj)
     compiler.compile_exe(root, objs, exe, [], [], False, norun=True)

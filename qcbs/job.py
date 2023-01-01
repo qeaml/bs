@@ -89,7 +89,7 @@ class Job:
 
   def compile_all_objects(self) -> bool:
     for src in self.sources:
-      obj, ok = self.cc.compile_obj(self.root, src, self.obj, self.incl, self.debug, norun=self.norun)
+      obj, ok = self.cc.compile_obj(self.root, self.src, src, self.obj, self.incl, self.debug, norun=self.norun)
       if not ok:
         err("Compilation failed. Aborting.")
         return False
