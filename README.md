@@ -28,14 +28,16 @@ bin: '' # where to place compiled executables (object files NOT included). alike
 obj: '' # where to place compiled object files. if this is omitted, bin is used
         # instead.
 
-libs: [] # list of libraries to link against, just their names, like "SDL2":
-         # no extensions. this may be omitted for empty lists
+lib: [] # list of libraries to link against, just their names, like "SDL2":
+        # no extensions. this may be omitted for empty lists
 
 incl: [] # paths to add to the include search paths. this may be omitted for
          # empty lists
 ```
 
 ## Usage
+
+### Building a project
 
 To build whatever project is in the working directory:
 
@@ -71,4 +73,22 @@ $ qcbs --clean --debug
 $ qcbs /user/Timmy/projects/my-app --debug
 $ qcbs .. --debug --clean
 $ qcbs cooltool --clean
+```
+
+### Initializing a project
+
+You can use `init` to create a file structure based on the command-line
+arguments passed to qcbs:
+
+```console
+$ git init my-project
+$ cd my-project
+$ qcbs --init --exe=my-app --cc=clang --src=source --incl=include --bin=target --obj=target/build
+Initializing project at .
+* source
+* target
+* target\build
+* include
+* qcbs.yaml
+Finshed in 0.0s
 ```
