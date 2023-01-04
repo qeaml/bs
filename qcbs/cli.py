@@ -7,13 +7,14 @@ from time import time
 from datetime import datetime
 import subprocess
 import sys
+import shutil
 
 def run_cmd_in(cwd: Path, cmd: str) -> bool:
   return subprocess.run(cmd,
     cwd=cwd,
     shell=True,
     stdout=sys.stderr,
-    stderr=sys.stderr) == 0
+    stderr=sys.stderr).returncode == 0
 
 @dataclass
 class Args:
@@ -47,13 +48,13 @@ class Args:
       else:
         pos.append(a)
 
-    project = "."
-    if len(pos) > 1:
-      project = pos[0]
-    if len(pos) > 2:
-      warn("Excess positional arguments ignored.")
-
     parsed = Args.from_raw_dict(named)
+
+    parsed.project = "."
+    if len(pos) > 0:
+      parsed.project = pos[0]
+    if len(pos) > 1:
+      warn("Excess positional arguments ignored.")
 
     parsed.clean = named.get("clean", False)
     parsed.debug = named.get("debug", False)
@@ -116,25 +117,27 @@ class Args:
     )
 
   def combine(self, other: "Args") -> "Args":
-    project = other.project if other.project != self.project else self.project
-    root = other.root if other.root != self.root else self.root
-    src = other.src if other.src != self.src else self.src
-    bin = other.bin if other.bin != self.bin else self.bin
-    obj = other.obj if other.obj != self.obj else self.obj
-    exe = other.exe if other.exe != self.exe else self.exe
-    cc = other.cc if other.cc != self.cc else self.cc
-    libs = other.libs if other.libs != self.libs else self.libs
-    link = other.link if other.link != self.link else self.link
-    incl = other.incl if other.incl != self.incl else self.incl
+    defaults = Args.default()
+    project = other.project if other.project != self.project and other.project != defaults.project else self.project
+    root = other.root if other.root != self.root and other.root != defaults.root else self.root
+    src = other.src if other.src != self.src and other.src != defaults.src else self.src
+    bin = other.bin if other.bin != self.bin and other.bin != defaults.bin else self.bin
+    obj = other.obj if other.obj != self.obj and other.obj != defaults.obj else self.obj
+    exe = other.exe if other.exe != self.exe and other.exe != defaults.exe else self.exe
+    cc = other.cc if other.cc != self.cc and other.cc != defaults.cc else self.cc
+    libs = other.libs if other.libs != self.libs and other.libs != defaults.libs else self.libs
+    link = other.link if other.link != self.link and other.link != defaults.link else self.link
+    incl = other.incl if other.incl != self.incl and other.incl != defaults.incl else self.incl
     return Args(
       project, root, src, bin, obj,
       cc, exe, libs, link, incl,
       self.debug or other.debug, self.clean or other.clean, self.init or other.init
     )
 
-def init(j: job.Job, build_file: Path) -> None:
+def init(j: job.Job, project_path: Path, build_file: Path) -> None:
   start = time()
-  important(f"Initializing project at {j.root}")
+  important(f"Initializing project at {project_path}")
+  project_path.mkdir(parents=True, exist_ok=True)
   j.root.mkdir(parents=True, exist_ok=True)
   important(f"* git init")
   if run_cmd_in(j.root, "git init ."):
@@ -143,9 +146,9 @@ def init(j: job.Job, build_file: Path) -> None:
     with gitignore.open("xt") as f:
       f.write(f"# automatically generated {datetime.now()}\n")
       if j.bin != j.root:
-        f.write(f"{j.bin.as_posix()}\n")
+        f.write(f"{j.bin.relative_to(j.root).as_posix()}\n")
       if j.obj != j.root:
-        f.write(f"{j.obj.as_posix()}\n")
+        f.write(f"{j.obj.relative_to(j.root).as_posix()}\n")
   important(f"* {j.src}")
   j.src.mkdir(parents=True, exist_ok=True)
   important(f"* {j.bin}")
@@ -165,7 +168,7 @@ def init(j: job.Job, build_file: Path) -> None:
   important(f"* {build_file}")
   with build_file.open(bf_mode) as f:
     f.write(f"# automatically generated {datetime.now()}\n")
-    f.write(f"cc: '{j.cc}'\n")
+    f.write(f"cc: '{j.cc.cmd}'\n")
     f.write(f"exe: '{j.exe}'\n")
     if j.src != j.root:
       f.write(f"src: '{j.src.as_posix()}'\n")

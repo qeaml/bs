@@ -10,7 +10,8 @@ from pathlib import Path
 def main() -> None:
   colorama.just_fix_windows_console()
 
-  args_cmd = cli.Args.parse(sys.argv)
+  args_cmd = cli.Args.parse(sys.argv[1:])
+
   cmd_project_path = Path(args_cmd.project)
   build_file = cmd_project_path.joinpath("qcbs.yaml")
   args_bf = cli.Args.default()
@@ -30,10 +31,6 @@ def main() -> None:
     err("Provide a compiler name")
     return
 
-  if args.init and args.root != args.project:
-    args.project = args.root
-    args.root = ""
-
   project_path = Path(args.project)
   build_file = project_path.joinpath("qcbs.yaml")
   root_path = project_path.joinpath(args.root)
@@ -50,7 +47,7 @@ def main() -> None:
   )
 
   if args.init:
-    cli.init(thejob, build_file)
+    cli.init(thejob, project_path, build_file)
   else:
     cli.build(thejob, project_path)
 

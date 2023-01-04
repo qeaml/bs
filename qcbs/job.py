@@ -75,8 +75,6 @@ class Job:
     self.debug = debug
     self.norun = norun
 
-    self.bin.mkdir(parents=True, exist_ok=True)
-    self.obj.mkdir(parents=True, exist_ok=True)
 
     self.sources = []
     self.objects = []
@@ -88,6 +86,8 @@ class Job:
       self.sources.append(f)
 
   def compile_all_objects(self) -> bool:
+    self.bin.mkdir(parents=True, exist_ok=True)
+    self.obj.mkdir(parents=True, exist_ok=True)
     for src in self.sources:
       obj, ok = self.cc.compile_obj(self.root, self.src, src, self.obj, self.incl, self.debug, norun=self.norun)
       if not ok:

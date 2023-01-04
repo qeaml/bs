@@ -119,6 +119,10 @@ CL_FLAGSET = Flagset(
 class Compiler:
   """ Contains information about a C/C++ compiler. """
 
+  # the name of the compiler
+  # e.g. clang or cl
+  name: str
+
   # the command used to invoke the compiled
   # e.g. gcc or cl.exe
   cmd: str
@@ -156,9 +160,9 @@ class Compiler:
     return res.returncode == 0
 
 COMPILERS = {
-  "clang": Compiler("clang", GNULIKE_FLAGSET),
-  "gcc": Compiler("gcc", GNULIKE_FLAGSET),
-  "cl": Compiler("cl.exe", CL_FLAGSET),
+  "clang": Compiler("clang", "clang", GNULIKE_FLAGSET),
+  "gcc": Compiler("clang", "gcc", GNULIKE_FLAGSET),
+  "cl": Compiler("cl", "cl.exe", CL_FLAGSET),
 }
 
 if __name__ == "__main__":
