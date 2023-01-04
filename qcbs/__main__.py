@@ -42,8 +42,7 @@ def main() -> None:
   thejob = job.Job(
     root_path, src_path, bin_path, obj_path,
     args.exe, args.cc, args.libs, args.link, incl_paths,
-    args.clean, args.debug,
-    False
+    args.clean, args.debug, False
   )
 
   if args.init:

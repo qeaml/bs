@@ -131,12 +131,15 @@ class Args:
     return Args(
       project, root, src, bin, obj,
       cc, exe, libs, link, incl,
-      self.debug or other.debug, self.clean or other.clean, self.init or other.init
+      self.clean or other.clean, self.debug or other.debug, self.init or other.init
     )
 
 def init(j: job.Job, project_path: Path, build_file: Path) -> None:
   start = time()
   important(f"Initializing project at {project_path}")
+  if j.clean and project_path.exists():
+    important("Replacing old project!")
+    shutil.rmtree(project_path)
   project_path.mkdir(parents=True, exist_ok=True)
   j.root.mkdir(parents=True, exist_ok=True)
   important(f"* git init")
