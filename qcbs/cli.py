@@ -8,6 +8,7 @@ from datetime import datetime
 import subprocess
 import sys
 import shutil
+import os.path
 
 def run_cmd_in(cwd: Path, cmd: str) -> bool:
   return subprocess.run(cmd,
@@ -134,6 +135,33 @@ class Args:
       self.clean or other.clean, self.debug or other.debug, self.init or other.init
     )
 
+CLANGD_HEADER = """
+CompileFlags:
+  Add: [
+    -Wall,
+    -Wpedantic,
+""".strip() + '\n'
+
+CLANGD_FOOTER = """
+  ]
+---
+If:
+  PathMatch: .*\\.[ch]
+CompileFlags:
+  Add: [
+    -xc,
+    -std=c11,
+  ]
+---
+If:
+  PathMatch: .*\\.[ch]pp
+CompileFlags:
+  Add: [
+    -xc++,
+    -std=c++17,
+  ]
+""".strip() + '\n'
+
 def init(j: job.Job, project_path: Path, build_file: Path) -> None:
   start = time()
   important(f"Initializing project at {project_path}")
@@ -164,6 +192,20 @@ def init(j: job.Job, project_path: Path, build_file: Path) -> None:
     for i in j.incl:
       important(f"* {i}")
       i.mkdir(parents=True, exist_ok=True)
+
+  clangd = j.root.joinpath(".clangd")
+  clangd_mode = "wt"
+  if not clangd.exists():
+    clangd_mode = "xt"
+
+  important(f"* {clangd}")
+  with clangd.open(clangd_mode) as f:
+    f.write(f"# automatically generated {datetime.now()}\n")
+    f.write(CLANGD_HEADER)
+    for i in j.incl:
+      ip = Path(os.path.relpath(i, j.src))
+      f.write(f"    -I{ip.as_posix()},\n")
+    f.write(CLANGD_FOOTER)
 
   bf_mode = "wt"
   if not build_file.exists():
