@@ -214,7 +214,7 @@ def init(j: job.Job, project_path: Path, build_file: Path) -> None:
   important(f"* {build_file}")
   with build_file.open(bf_mode) as f:
     f.write(f"# automatically generated {datetime.now()}\n")
-    f.write(f"cc: '{j.cc.cmd}'\n")
+    f.write(f"cc: '{j.cc.name}'\n")
     f.write(f"exe: '{j.exe}'\n")
     if j.src != j.root:
       f.write(f"src: '{j.src.relative_to(j.root).as_posix()}'\n")
@@ -223,7 +223,7 @@ def init(j: job.Job, project_path: Path, build_file: Path) -> None:
     if j.obj != j.root and j.obj != j.bin:
       f.write(f"obj: '{j.obj.relative_to(j.root).as_posix()}'\n")
     if j.libs != []:
-      f.write("libs:\n")
+      f.write("lib:\n")
       for l in j.libs:
         f.write(f"  - '{l}'\n")
     if j.link != []:
