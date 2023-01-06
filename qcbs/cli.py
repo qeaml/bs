@@ -146,12 +146,13 @@ def init(j: job.Job, project_path: Path, build_file: Path) -> None:
   if run_cmd_in(j.root, "git init ."):
     gitignore = j.root.joinpath(".gitignore")
     important(f"* {gitignore}")
-    with gitignore.open("xt") as f:
-      f.write(f"# automatically generated {datetime.now()}\n")
-      if j.bin != j.root:
-        f.write(f"{j.bin.relative_to(j.root).as_posix()}\n")
-      if j.obj != j.root:
-        f.write(f"{j.obj.relative_to(j.root).as_posix()}\n")
+    if not gitignore.exists():
+      with gitignore.open("xt") as f:
+        f.write(f"# automatically generated {datetime.now()}\n")
+        if j.bin != j.root:
+          f.write(f"{j.bin.relative_to(j.root).as_posix()}\n")
+        if j.obj != j.root:
+          f.write(f"{j.obj.relative_to(j.root).as_posix()}\n")
   important(f"* {j.src}")
   j.src.mkdir(parents=True, exist_ok=True)
   important(f"* {j.bin}")
@@ -174,11 +175,11 @@ def init(j: job.Job, project_path: Path, build_file: Path) -> None:
     f.write(f"cc: '{j.cc.cmd}'\n")
     f.write(f"exe: '{j.exe}'\n")
     if j.src != j.root:
-      f.write(f"src: '{j.src.as_posix()}'\n")
+      f.write(f"src: '{j.src.relative_to(j.root).as_posix()}'\n")
     if j.bin != j.root:
-      f.write(f"bin: '{j.bin.as_posix()}'\n")
-    if j.obj != j.root:
-      f.write(f"obj: '{j.obj.as_posix()}'\n")
+      f.write(f"bin: '{j.bin.relative_to(j.root).as_posix()}'\n")
+    if j.obj != j.root and j.obj != j.bin:
+      f.write(f"obj: '{j.obj.relative_to(j.root).as_posix()}'\n")
     if j.libs != []:
       f.write("libs:\n")
       for l in j.libs:
@@ -190,7 +191,7 @@ def init(j: job.Job, project_path: Path, build_file: Path) -> None:
     if j.incl != []:
       f.write("incl:\n")
       for i in j.incl:
-        f.write(f"  - '{i.as_posix()}'\n")
+        f.write(f"  - '{i.relative_to(j.root).as_posix()}'\n")
 
   span = time()-start
   important(f"Finshed in {span:.1f}s")
