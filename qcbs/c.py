@@ -139,11 +139,10 @@ class Compiler:
         fn = INCLUDE_DIRECTIVE.search(ln)
         if fn is None:
           continue
-        p = idir.joinpath(fn.group(1))
-        if not p.exists():
-          continue
-        if p.stat().st_mtime > obj_time:
-          return True
+        for idir in incl:
+          p = idir.joinpath(fn.group(1))
+          if p.exists() and p.stat().st_mtime > obj_time:
+            return True
     return False
 
   # compiles the given source file into an objec file, returning a tuple
@@ -155,9 +154,11 @@ class Compiler:
 
     if obj.exists():
       obj_stat = obj.stat()
-      if src.stat().st_mtime < obj_stat.st_mtime:
-        return obj, True
-      if not self.parse_includes(src, obj_stat.st_mtime, inc):
+      if not(
+        src.stat().st_mtime > obj_stat.st_mtime
+          or
+        self.parse_includes(src, obj_stat.st_mtime, inc)
+      ):
         return obj, True
 
     important(f"* {obj.stem}{obj.suffix}")
