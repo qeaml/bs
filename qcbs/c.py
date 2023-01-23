@@ -2,6 +2,7 @@ from qcbs.common import *
 from pathlib import Path
 from dataclasses import dataclass
 import subprocess
+import re
 
 @dataclass
 class Flagset:
@@ -115,6 +116,8 @@ CL_FLAGSET = Flagset(
   link = "%s",
 )
 
+INCLUDE_DIRECTIVE = re.compile('#include ?"(.+)"')
+
 @dataclass
 class Compiler:
   """ Contains information about a C/C++ compiler. """
@@ -130,14 +133,33 @@ class Compiler:
   # the flag templates
   flagset: Flagset
 
+  def parse_includes(self, src: Path, obj_time: float, incl: list[Path]) -> bool:
+    with src.open("rt") as f:
+      for ln in f:
+        fn = INCLUDE_DIRECTIVE.search(ln)
+        if fn is None:
+          continue
+        p = idir.joinpath(fn.group(1))
+        if not p.exists():
+          continue
+        if p.stat().st_mtime > obj_time:
+          return True
+    return False
+
   # compiles the given source file into an objec file, returning a tuple
   # containing the resulting object filename and a bool indicating whether the
   # compilation was successful or not
   def compile_obj(self, root: Path, src_dir: Path, src: Path, out_dir: Path, inc: list[Path], debug: bool, norun: bool) -> tuple[Path, bool]:
     obj = out_dir.joinpath(src.relative_to(src_dir)).with_suffix(f".{self.flagset.obj_ext}")
     obj.parent.mkdir(exist_ok=True)
-    if obj.exists() and src.stat().st_mtime < obj.stat().st_mtime:
-      return obj, True
+
+    if obj.exists():
+      obj_stat = obj.stat()
+      if src.stat().st_mtime < obj_stat.st_mtime:
+        return obj, True
+      if not self.parse_includes(src, obj_stat.st_mtime, inc):
+        return obj, True
+
     important(f"* {obj.stem}{obj.suffix}")
     lang = src.suffix.removeprefix(".").lower()
     cmd = self.flagset.for_obj(self.cmd, src, obj, inc, lang, debug)
